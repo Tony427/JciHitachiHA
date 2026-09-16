@@ -18,7 +18,10 @@ async def _async_setup(hass, async_add):
         # every device type can fail to answer; the sensor explains why it is unavailable
         async_add([JciHitachiAttentionBinarySensorEntity(thing, coordinator)],
                   update_before_add=True)
-        if thing.type == "DH":
+        if thing.type == "AC":
+            async_add([JciHitachiFreezeCleanNotificationBinarySensorEntity(thing, coordinator)],
+                      update_before_add=True)
+        elif thing.type == "DH":
             async_add(
                 [JciHitachiErrorBinarySensorEntity(thing, coordinator),
                  JciHitachiWaterFullBinarySensorEntity(thing, coordinator)],
@@ -120,3 +123,30 @@ class JciHitachiAttentionBinarySensorEntity(JciHitachiEntity, BinarySensorEntity
     @property
     def unique_id(self):
         return f"{self._thing.gateway_mac_address}_attention_binary_sensor"
+
+
+class JciHitachiFreezeCleanNotificationBinarySensorEntity(JciHitachiEntity, BinarySensorEntity):
+    """Freeze-clean prompt of an air conditioner, from the numeric status field `CleanNotification`.
+
+    Evidence (2026-09-16, three RAD-series ACs, LibJciHitachi fixtures/observed_2026_09_16):
+    the official app showed the freeze-clean prompt for exactly the two units whose
+    status/response carried `CleanNotification: 1`; the third unit had 0 and no prompt.
+    """
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+
+    @property
+    def name(self):
+        """Return the name of the entity."""
+        return f"{self._thing.name} Freeze Clean Notification"
+
+    @property
+    def is_on(self):
+        status = self.hass.data[DOMAIN][UPDATED_DATA].get(self._thing.name, None)
+        if status is None or status.CleanNotification == "unsupported":
+            return None
+        return status.CleanNotification != 0
+
+    @property
+    def unique_id(self):
+        return f"{self._thing.gateway_mac_address}_freeze_clean_notification_binary_sensor"
