@@ -68,6 +68,12 @@ def build_coordinator(hass, api, config_entry=None):
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}")
 
+        _LOGGER.debug(
+            f"Latest data: {[(name, value.status) for name, value in hass.data[DOMAIN][UPDATED_DATA].items()]}")
+
+        # Must stay last: the reload unloads the entry (and pops hass.data[DOMAIN]) right away,
+        # so nothing may touch hass.data[DOMAIN] after scheduling it. Observed 2026-09-17 01:13
+        # as "Unexpected error fetching jcihitachi_tw data: KeyError" when this ran earlier.
         recovered = {
             name for name in pending_things if api.things[name].support_code is not None
         }
@@ -82,9 +88,6 @@ def build_coordinator(hass, api, config_entry=None):
                 _LOGGER.warning(
                     f"{', '.join(sorted(recovered))} answered for the first time; restart Home Assistant to create its entities (YAML setup cannot reload)."
                 )
-
-        _LOGGER.debug(
-            f"Latest data: {[(name, value.status) for name, value in hass.data[DOMAIN][UPDATED_DATA].items()]}")
 
     coordinator = DataUpdateCoordinator(
         hass,
