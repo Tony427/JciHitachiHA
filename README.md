@@ -53,6 +53,7 @@ A home assistant integration for controlling Jci Hitachi devices, using [LibJciH
   - ~~Freeze clean 凍結洗淨~~ (Only supported by LibJciHitachi)
   - Freeze clean notification 凍結洗淨提醒 (binary sensor, from the status field `CleanNotification`)
 - All device types
+  - Entity names follow your Home Assistant language (English, 繁體中文); `translations/zh-Hant.json` uses the Taiwan wording of this list
   - Attention required 需要處理 (binary sensor: on when the cloud did not answer for this device, or answered with a payload the backend cannot decode; the exact reason, including the raw bytes, is in the `reason` attribute)
 - Hitachi Dehumidifier 日立除濕機
   - Power 電源
