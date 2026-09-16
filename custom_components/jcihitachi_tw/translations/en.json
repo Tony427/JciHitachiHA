@@ -21,7 +21,7 @@
         "error": {
             "assertion_check_error": "The device(s) you specified is/are not available from the API.",
             "login_error": "Incorrect email or password.",
-            "device_error": "Logged in, but none of your devices answered. Make sure they are online, close the official app, and clear any pending notification (e.g. freeze clean / filter) in the app. Details are in the Home Assistant log.",
+            "device_error": "Logged in, but none of your devices answered. Make sure they are online and close the official app, then try again. The reason for each device is in the Home Assistant log.",
             "connection_error": "Could not reach the Hitachi cloud. Check the Home Assistant log and try again.",
             "unknown_error": "Unknown error occurred."
         },
