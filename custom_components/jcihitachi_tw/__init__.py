@@ -1,5 +1,6 @@
 """JciHitachi integration."""
 import asyncio
+import functools
 import logging
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -34,15 +35,11 @@ def build_coordinator(hass, api, config_entry=None):
     pending_things = {
         name for name, thing in api.things.items() if thing.support_code is None
     }
-    # a pending device that keeps failing costs up to one extra MQTT round trip (10 s) per poll
+    # While a device is pending, every poll also requests the support codes (one extra MQTT
+    # phase, up to 10 s). Asking only the pending device in a second refresh_status() call
+    # was tried and rejected: the first call marked it available (its status answers),
+    # the second marked it unavailable again, so the state and the log flapped every poll.
     timeout = BASE_TIMEOUT + len(api.things) * 2 + (10 if pending_things else 0)
-
-    def refresh_pending():
-        for name in sorted(pending_things):
-            try:
-                api.refresh_status(device_name=name, refresh_support_code=True)
-            except JciHitachiDeviceError:
-                pass  # still failing; the reason is on the thing and logged by the backend
 
     async def async_update_data():
         """Fetch data from API endpoint.
@@ -54,9 +51,11 @@ def build_coordinator(hass, api, config_entry=None):
             # Note: asyncio.TimeoutError and aiohttp.ClientError are already
             # handled by the data update coordinator.
             async with async_timeout.timeout(timeout):
-                await hass.async_add_executor_job(api.refresh_status)
-                if pending_things:
-                    await hass.async_add_executor_job(refresh_pending)
+                await hass.async_add_executor_job(
+                    functools.partial(
+                        api.refresh_status, refresh_support_code=bool(pending_things)
+                    )
+                )
                 hass.data[DOMAIN][UPDATED_DATA] = api.get_status(legacy=True)
 
         except asyncio.TimeoutError as err:
