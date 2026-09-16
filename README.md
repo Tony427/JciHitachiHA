@@ -50,9 +50,9 @@ A home assistant integration for controlling Jci Hitachi devices, using [LibJciH
   - Power consumption 用電統計 (supports HA core v2021.9.0+)
   - Monthly power consumption 月用電統計
   - ~~Sleep timer 睡眠計時器~~ (Only supported by LibJciHitachi)
-  - Freeze clean 凍結洗淨 (switch)
-  - Freeze clean notification 凍結洗淨提醒 / Clean filter notification 濾網清潔提醒 (binary sensors, read from the device shadow)
-  - Attention required 需要處理 (binary sensor: on when the cloud did not answer for this device or answered with something the backend cannot decode; the reason is in the attributes)
+  - ~~Freeze clean 凍結洗淨~~ (Only supported by LibJciHitachi)
+- All device types
+  - Attention required 需要處理 (binary sensor: on when the cloud did not answer for this device, or answered with a payload the backend cannot decode; the exact reason, including the raw bytes, is in the `reason` attribute)
 - Hitachi Dehumidifier 日立除濕機
   - Power 電源
   - Mode 運轉模式

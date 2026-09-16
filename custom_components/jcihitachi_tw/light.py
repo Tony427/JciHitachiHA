@@ -60,7 +60,7 @@ class JciHitachiDehumidifierLightEntity(JciHitachiEntity, LightEntity):
     @property
     def is_on(self):
         """Return true if the entity is on"""
-        status = self.hass.data[DOMAIN][UPDATED_DATA][self._thing.name]
+        status = self.hass.data[DOMAIN][UPDATED_DATA].get(self._thing.name, None)
         if status:
             if status.display_brightness == "all_off":
                 return False
@@ -72,7 +72,7 @@ class JciHitachiDehumidifierLightEntity(JciHitachiEntity, LightEntity):
 
     @property
     def brightness(self):
-        status = self.hass.data[DOMAIN][UPDATED_DATA][self._thing.name]
+        status = self.hass.data[DOMAIN][UPDATED_DATA].get(self._thing.name, None)
         if status:
             return self.brightness_mapping.get(status.display_brightness, 0)
 

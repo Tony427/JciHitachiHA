@@ -304,6 +304,11 @@ class JciHitachiClimateEntity(JciHitachiEntity, ClimateEntity):
         _LOGGER.debug(f"Set {self.name} hvac_mode to {hvac_mode}")
 
         status = self.hass.data[DOMAIN][UPDATED_DATA].get(self._thing.name, None)
+        if status is None:
+            _LOGGER.warning(
+                f"Cannot set hvac_mode on {self.name}: no status available ({self._thing.attention_reason})"
+            )
+            return
         if status.power == "off" and hvac_mode != HVACMode.OFF:
             self.put_queue(status_name="power", status_str_value="on")
 

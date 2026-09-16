@@ -28,14 +28,21 @@ BASE_TIMEOUT = 5
 
 def build_coordinator(hass, api, config_entry=None):
 
-    timeout = BASE_TIMEOUT + len(api.things) * 2
-
     # Things whose support code was never read cannot get their control entities
-    # (climate needs it to know the supported modes). Once one of them recovers, reload the
-    # entry so the missing entities are created.
+    # (climate / humidifier need it). They are asked again, one at a time, after each normal
+    # poll; once one answers, a config entry is reloaded so the missing entities get created.
     pending_things = {
         name for name, thing in api.things.items() if thing.support_code is None
     }
+    # a pending device that keeps failing costs up to one extra MQTT round trip (10 s) per poll
+    timeout = BASE_TIMEOUT + len(api.things) * 2 + (10 if pending_things else 0)
+
+    def refresh_pending():
+        for name in sorted(pending_things):
+            try:
+                api.refresh_status(device_name=name, refresh_support_code=True)
+            except JciHitachiDeviceError:
+                pass  # still failing; the reason is on the thing and logged by the backend
 
     async def async_update_data():
         """Fetch data from API endpoint.
@@ -47,9 +54,9 @@ def build_coordinator(hass, api, config_entry=None):
             # Note: asyncio.TimeoutError and aiohttp.ClientError are already
             # handled by the data update coordinator.
             async with async_timeout.timeout(timeout):
-                await hass.async_add_executor_job(
-                    api.refresh_status, None, bool(pending_things)
-                )
+                await hass.async_add_executor_job(api.refresh_status)
+                if pending_things:
+                    await hass.async_add_executor_job(refresh_pending)
                 hass.data[DOMAIN][UPDATED_DATA] = api.get_status(legacy=True)
 
         except asyncio.TimeoutError as err:
@@ -65,12 +72,17 @@ def build_coordinator(hass, api, config_entry=None):
         recovered = {
             name for name in pending_things if api.things[name].support_code is not None
         }
-        if recovered and config_entry is not None:
-            _LOGGER.info(
-                f"{', '.join(sorted(recovered))} answered for the first time; reloading the entry to create the missing entities."
-            )
+        if recovered:
             pending_things.difference_update(recovered)
-            hass.config_entries.async_schedule_reload(config_entry.entry_id)
+            if config_entry is not None:
+                _LOGGER.info(
+                    f"{', '.join(sorted(recovered))} answered for the first time; reloading the entry to create the missing entities."
+                )
+                hass.config_entries.async_schedule_reload(config_entry.entry_id)
+            else:
+                _LOGGER.warning(
+                    f"{', '.join(sorted(recovered))} answered for the first time; restart Home Assistant to create its entities (YAML setup cannot reload)."
+                )
 
         _LOGGER.debug(
             f"Latest data: {[(name, value.status) for name, value in hass.data[DOMAIN][UPDATED_DATA].items()]}")
@@ -202,6 +214,16 @@ async def async_setup_entry(hass, config_entry):
     
     # Return boolean to indicate that initialization was successful.
     return True
+
+
+async def async_unload_entry(hass, config_entry):
+    """Unload a config entry (needed for reload after a device recovers)."""
+    unload_ok = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
+    if unload_ok:
+        data = hass.data.pop(DOMAIN, None)
+        if data and API in data:
+            await hass.async_add_executor_job(data[API].logout)
+    return unload_ok
 
 
 @dataclass

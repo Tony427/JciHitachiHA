@@ -13,11 +13,7 @@ async def _async_setup(hass, async_add):
     coordinator = hass.data[DOMAIN][COORDINATOR]
 
     for thing in api.things.values():
-        if thing.type == "AC":
-            async_add(
-                [JciHitachiFreezeCleanSwitchEntity(thing, coordinator)],
-                update_before_add=True)
-        elif thing.type == "DH":
+        if thing.type == "DH":
             async_add(
                 [JciHitachiAirCleaningFilterEntity(thing, coordinator),
                  JciHitachiCleanFilterNotifySwitchEntity(thing, coordinator),
@@ -253,47 +249,4 @@ class JciHitachiKeypadLockSwitchEntity(JciHitachiEntity, SwitchEntity):
         """Turn keypad lock off."""
         _LOGGER.debug(f"Turn {self.name} off")
         self.put_queue(status_name="KeypadLock", status_str_value="disabled")
-        self.update()
-
-
-class JciHitachiFreezeCleanSwitchEntity(JciHitachiEntity, SwitchEntity):
-    """Freeze clean (凍結洗淨) of an air conditioner: backend status `CleanSwitch`, legacy name `freeze_clean`."""
-
-    def __init__(self, thing, coordinator):
-        super().__init__(thing, coordinator)
-
-    @property
-    def name(self):
-        """Return the name of the entity."""
-        return f"{self._thing.name} Freeze Clean"
-
-    @property
-    def icon(self):
-        return "mdi:snowflake-melt"
-
-    @property
-    def is_on(self):
-        """Indicate whether a freeze clean cycle is running."""
-        status = self.hass.data[DOMAIN][UPDATED_DATA].get(self._thing.name, None)
-        if status:
-            if status.freeze_clean == "on":
-                return True
-            elif status.freeze_clean == "off":
-                return False
-        return None
-
-    @property
-    def unique_id(self):
-        return f"{self._thing.gateway_mac_address}_freeze_clean_switch"
-
-    def turn_on(self):
-        """Start a freeze clean cycle."""
-        _LOGGER.debug(f"Turn {self.name} on")
-        self.put_queue(status_name="freeze_clean", status_str_value="on")
-        self.update()
-
-    def turn_off(self):
-        """Stop the freeze clean cycle."""
-        _LOGGER.debug(f"Turn {self.name} off")
-        self.put_queue(status_name="freeze_clean", status_str_value="off")
         self.update()

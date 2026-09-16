@@ -24,6 +24,16 @@ async def validate_auth(hass, email, password, device_names, max_retries) -> Non
     )
     await hass.async_add_executor_job(api.login)
 
+    # login() returns even when every device failed (each thing carries its reason); for the
+    # config flow that is still a failure the user must see, so surface it as a device error
+    if api.things and not any(thing.available for thing in api.things.values()):
+        api.logout()
+        raise JciHitachiDeviceError(
+            " | ".join(
+                f"{name}: {thing.attention_reason}" for name, thing in api.things.items()
+            )
+        )
+
     hass.data[DOMAIN] = {API: api}
 
 
