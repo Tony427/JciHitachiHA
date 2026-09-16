@@ -37,13 +37,10 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
 
 
 class JciHitachiErrorBinarySensorEntity(JciHitachiEntity, BinarySensorEntity):
+    _attr_translation_key = "error"
+
     def __init__(self, thing, coordinator):
         super().__init__(thing, coordinator)
-
-    @property
-    def name(self):
-        """Return the name of the entity."""
-        return f"{self._thing.name} Error"
 
     @property
     def is_on(self):
@@ -66,13 +63,10 @@ class JciHitachiErrorBinarySensorEntity(JciHitachiEntity, BinarySensorEntity):
 
 
 class JciHitachiWaterFullBinarySensorEntity(JciHitachiEntity, BinarySensorEntity):
+    _attr_translation_key = "water_full"
+
     def __init__(self, thing, coordinator):
         super().__init__(thing, coordinator)
-
-    @property
-    def name(self):
-        """Return the name of the entity."""
-        return f"{self._thing.name} Water Full Warning"
 
     @property
     def is_on(self):
@@ -100,13 +94,10 @@ class JciHitachiAttentionBinarySensorEntity(JciHitachiEntity, BinarySensorEntity
     Stays available while the device itself is unavailable: it is the entity that explains why.
     """
 
+    _attr_translation_key = "attention_required"
+
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-
-    @property
-    def name(self):
-        """Return the name of the entity."""
-        return f"{self._thing.name} Attention Required"
 
     @property
     def available(self) -> bool:
@@ -133,12 +124,9 @@ class JciHitachiFreezeCleanNotificationBinarySensorEntity(JciHitachiEntity, Bina
     status/response carried `CleanNotification: 1`; the third unit had 0 and no prompt.
     """
 
-    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_translation_key = "freeze_clean_notification"
 
-    @property
-    def name(self):
-        """Return the name of the entity."""
-        return f"{self._thing.name} Freeze Clean Notification"
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
 
     @property
     def is_on(self):

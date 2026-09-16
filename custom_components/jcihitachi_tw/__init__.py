@@ -234,6 +234,9 @@ class UpdateData:
 
 
 class JciHitachiEntity(CoordinatorEntity):
+    # entity names are translation keys (translations/*.json) prefixed with the device name
+    _attr_has_entity_name = True
+
     def __init__(self, thing, coordinator):
         super().__init__(coordinator)
         self._thing = thing
@@ -252,11 +255,6 @@ class JciHitachiEntity(CoordinatorEntity):
             "model": self._thing.model,
             "sw_version": self._thing.firmware_version,
         }
-
-    @property
-    def name(self):
-        """Return the thing's name."""
-        return self._thing.name
 
     @property
     def unique_id(self):

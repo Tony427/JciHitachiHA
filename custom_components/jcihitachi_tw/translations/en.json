@@ -28,5 +28,39 @@
         "abort": {
             "already_configured": "Device already configured"
         }
+    },
+    "entity": {
+        "binary_sensor": {
+            "error": { "name": "Error" },
+            "water_full": { "name": "Water full warning" },
+            "attention_required": { "name": "Attention required" },
+            "freeze_clean_notification": { "name": "Freeze clean notification" }
+        },
+        "fan": {
+            "air_speed": { "name": "Air speed" }
+        },
+        "light": {
+            "panel_led": { "name": "Panel LED" }
+        },
+        "number": {
+            "month_selector": { "name": "Month selector" }
+        },
+        "sensor": {
+            "indoor_humidity": { "name": "Indoor humidity" },
+            "pm25": { "name": "PM2.5" },
+            "odor_level": { "name": "Odor level" },
+            "power_consumption": { "name": "Power consumption" },
+            "monthly_power_consumption": { "name": "Monthly power consumption" },
+            "month_indicator": { "name": "Month indicator" },
+            "indoor_temperature": { "name": "Indoor temperature" }
+        },
+        "switch": {
+            "air_cleaning_filter": { "name": "Air cleaning filter setting" },
+            "clean_filter_notify": { "name": "Clean filter notification" },
+            "mold_prevention": { "name": "Mold prevention" },
+            "wind_swingable": { "name": "Wind swingable" },
+            "ion": { "name": "Ion" },
+            "keypad_lock": { "name": "Keypad lock" }
+        }
     }
 }
