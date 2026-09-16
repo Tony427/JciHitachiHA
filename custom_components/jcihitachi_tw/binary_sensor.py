@@ -3,6 +3,7 @@ import logging
 
 from homeassistant.components.binary_sensor import (BinarySensorDeviceClass,
                                                     BinarySensorEntity)
+from homeassistant.const import EntityCategory
 
 from . import API, COORDINATOR, DOMAIN, UPDATED_DATA, JciHitachiEntity
 
@@ -14,7 +15,13 @@ async def _async_setup(hass, async_add):
     coordinator = hass.data[DOMAIN][COORDINATOR]
 
     for thing in api.things.values():
-        if thing.type == "DH":
+        if thing.type == "AC":
+            async_add(
+                [JciHitachiAttentionBinarySensorEntity(thing, coordinator),
+                 JciHitachiFreezeCleanNotificationBinarySensorEntity(thing, coordinator),
+                 JciHitachiCleanFilterNotificationBinarySensorEntity(thing, coordinator)],
+                update_before_add=True)
+        elif thing.type == "DH":
             async_add(
                 [JciHitachiErrorBinarySensorEntity(thing, coordinator),
                  JciHitachiWaterFullBinarySensorEntity(thing, coordinator)],
@@ -85,3 +92,74 @@ class JciHitachiWaterFullBinarySensorEntity(JciHitachiEntity, BinarySensorEntity
     @property
     def unique_id(self):
         return f"{self._thing.gateway_mac_address}_water_full_binary_sensor"
+
+
+class JciHitachiAttentionBinarySensorEntity(JciHitachiEntity, BinarySensorEntity):
+    """On when the backend could not refresh this device (timeout or undecodable answer).
+
+    Stays available while the device itself is unavailable: it is the entity that explains why.
+    """
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def name(self):
+        """Return the name of the entity."""
+        return f"{self._thing.name} Attention Required"
+
+    @property
+    def available(self) -> bool:
+        return True
+
+    @property
+    def is_on(self):
+        return self._thing.attention_reason is not None
+
+    @property
+    def extra_state_attributes(self):
+        return {"reason": self._thing.attention_reason}
+
+    @property
+    def unique_id(self):
+        return f"{self._thing.gateway_mac_address}_attention_binary_sensor"
+
+
+class _JciHitachiShadowNotificationBinarySensorEntity(JciHitachiEntity, BinarySensorEntity):
+    """A notification flag from the device's `info` shadow (what the official app shows).
+
+    The shadow is read independently of the status channel, so this works even while the
+    status/support requests are failing.
+    """
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    shadow_key: str = ""
+    label: str = ""
+
+    @property
+    def name(self):
+        """Return the name of the entity."""
+        return f"{self._thing.name} {self.label}"
+
+    @property
+    def available(self) -> bool:
+        return self.shadow_key in self._thing.notifications
+
+    @property
+    def is_on(self):
+        return self._thing.notifications.get(self.shadow_key)
+
+    @property
+    def unique_id(self):
+        return f"{self._thing.gateway_mac_address}_{self.shadow_key.lower()}_binary_sensor"
+
+
+class JciHitachiFreezeCleanNotificationBinarySensorEntity(_JciHitachiShadowNotificationBinarySensorEntity):
+    shadow_key = "CleanNotification"
+    label = "Freeze Clean Notification"
+
+
+class JciHitachiCleanFilterNotificationBinarySensorEntity(_JciHitachiShadowNotificationBinarySensorEntity):
+    shadow_key = "CleanFilterNotification"
+    label = "Clean Filter Notification"

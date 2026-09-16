@@ -7,12 +7,14 @@ from queue import Queue
 from typing import Optional
 
 import async_timeout
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import discovery
 from homeassistant.helpers.update_coordinator import (CoordinatorEntity,
                                                       DataUpdateCoordinator,
                                                       UpdateFailed)
 from JciHitachi import __version__
-from JciHitachi.api import JciHitachiAWSAPI
+from JciHitachi.api import (JciHitachiAuthError, JciHitachiAWSAPI,
+                            JciHitachiDeviceError)
 
 from .const import (API, CONF_DEVICES, CONF_EMAIL, CONF_PASSWORD, CONF_RETRY,
                     CONFIG_SCHEMA, COORDINATOR, DOMAIN, UPDATE_DATA,
@@ -24,9 +26,16 @@ DATA_UPDATE_INTERVAL = timedelta(seconds=30)
 BASE_TIMEOUT = 5
 
 
-def build_coordinator(hass, api):
+def build_coordinator(hass, api, config_entry=None):
 
     timeout = BASE_TIMEOUT + len(api.things) * 2
+
+    # Things whose support code was never read cannot get their control entities
+    # (climate needs it to know the supported modes). Once one of them recovers, reload the
+    # entry so the missing entities are created.
+    pending_things = {
+        name for name, thing in api.things.items() if thing.support_code is None
+    }
 
     async def async_update_data():
         """Fetch data from API endpoint.
@@ -38,15 +47,31 @@ def build_coordinator(hass, api):
             # Note: asyncio.TimeoutError and aiohttp.ClientError are already
             # handled by the data update coordinator.
             async with async_timeout.timeout(timeout):
-                await hass.async_add_executor_job(api.refresh_status)
+                await hass.async_add_executor_job(
+                    api.refresh_status, None, bool(pending_things)
+                )
                 hass.data[DOMAIN][UPDATED_DATA] = api.get_status(legacy=True)
 
         except asyncio.TimeoutError as err:
             raise UpdateFailed(f"Command executed timed out when regularly fetching data.")
 
+        except JciHitachiDeviceError as err:
+            # every device failed this round; each thing carries its own attention_reason
+            raise UpdateFailed(f"No device answered: {err}")
+
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}")
-        
+
+        recovered = {
+            name for name in pending_things if api.things[name].support_code is not None
+        }
+        if recovered and config_entry is not None:
+            _LOGGER.info(
+                f"{', '.join(sorted(recovered))} answered for the first time; reloading the entry to create the missing entities."
+            )
+            pending_things.difference_update(recovered)
+            hass.config_entries.async_schedule_reload(config_entry.entry_id)
+
         _LOGGER.debug(
             f"Latest data: {[(name, value.status) for name, value in hass.data[DOMAIN][UPDATED_DATA].items()]}")
 
@@ -145,10 +170,13 @@ async def async_setup_entry(hass, config_entry):
         except AssertionError as err:
             _LOGGER.error(f"Assertion check error: {err}")
             return False
-        except RuntimeError as err:
+        except JciHitachiAuthError as err:
             _LOGGER.error(f"Failed to login API: {err}")
             return False
-        
+        except RuntimeError as err:
+            # cloud / MQTT hiccup: let Home Assistant retry instead of staying dead until reboot
+            raise ConfigEntryNotReady(f"Failed to reach the Hitachi cloud: {err}") from err
+
         hass.data[DOMAIN] = {}
         hass.data[DOMAIN][API] = api
     else:
@@ -157,10 +185,15 @@ async def async_setup_entry(hass, config_entry):
 
     _LOGGER.debug(f"Backend version: {__version__}")
     _LOGGER.debug(f"Thing info: {[thing for thing in hass.data[DOMAIN][API].things.values()]}")
+    for thing in hass.data[DOMAIN][API].things.values():
+        if not thing.available:
+            _LOGGER.warning(
+                f"{thing.name} is loaded as unavailable: {thing.attention_reason}"
+            )
 
     hass.data[DOMAIN][UPDATE_DATA] = Queue()
     hass.data[DOMAIN][UPDATED_DATA] = hass.data[DOMAIN][API].get_status(legacy=True)
-    hass.data[DOMAIN][COORDINATOR] = build_coordinator(hass, hass.data[DOMAIN][API])
+    hass.data[DOMAIN][COORDINATOR] = build_coordinator(hass, hass.data[DOMAIN][API], config_entry)
 
     # Start jcihitachi components
     _LOGGER.debug("Starting JciHitachi components.") 
