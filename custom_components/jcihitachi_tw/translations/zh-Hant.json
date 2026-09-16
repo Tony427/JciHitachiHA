@@ -31,36 +31,82 @@
     },
     "entity": {
         "binary_sensor": {
-            "error": { "name": "錯誤警示" },
-            "water_full": { "name": "滿水警示" },
-            "attention_required": { "name": "需要處理" },
-            "freeze_clean_notification": { "name": "凍結洗淨提醒" }
+            "error": {
+                "name": "錯誤警示"
+            },
+            "water_full": {
+                "name": "滿水警示"
+            },
+            "attention_required": {
+                "name": "需要處理"
+            },
+            "freeze_clean_notification": {
+                "name": "凍結洗淨提醒"
+            }
         },
         "fan": {
-            "air_speed": { "name": "風速" }
+            "air_speed": {
+                "name": "風速"
+            }
         },
         "light": {
-            "panel_led": { "name": "面板指示燈" }
+            "panel_led": {
+                "name": "面板指示燈"
+            }
         },
         "number": {
-            "month_selector": { "name": "用電統計月份選擇" }
+            "month_selector": {
+                "name": "用電統計月份選擇"
+            }
         },
         "sensor": {
-            "indoor_humidity": { "name": "室內濕度" },
-            "pm25": { "name": "PM2.5" },
-            "odor_level": { "name": "異味等級" },
-            "power_consumption": { "name": "用電量" },
-            "monthly_power_consumption": { "name": "月用電量" },
-            "month_indicator": { "name": "用電統計月份" },
-            "indoor_temperature": { "name": "室內溫度" }
+            "indoor_humidity": {
+                "name": "室內濕度"
+            },
+            "pm25": {
+                "name": "PM2.5"
+            },
+            "odor_level": {
+                "name": "異味等級"
+            },
+            "power_consumption": {
+                "name": "用電量"
+            },
+            "monthly_power_consumption": {
+                "name": "月用電量"
+            },
+            "month_indicator": {
+                "name": "用電統計月份"
+            },
+            "indoor_temperature": {
+                "name": "室內溫度"
+            },
+            "freeze_clean_status": {
+                "name": "凍結洗淨狀態碼"
+            }
         },
         "switch": {
-            "air_cleaning_filter": { "name": "空氣清淨濾網設定" },
-            "clean_filter_notify": { "name": "濾網清潔通知" },
-            "mold_prevention": { "name": "機體防霉" },
-            "wind_swingable": { "name": "導風板擺動" },
-            "ion": { "name": "負離子" },
-            "keypad_lock": { "name": "按鍵鎖" }
+            "air_cleaning_filter": {
+                "name": "空氣清淨濾網設定"
+            },
+            "clean_filter_notify": {
+                "name": "濾網清潔通知"
+            },
+            "mold_prevention": {
+                "name": "機體防霉"
+            },
+            "wind_swingable": {
+                "name": "導風板擺動"
+            },
+            "ion": {
+                "name": "負離子"
+            },
+            "keypad_lock": {
+                "name": "按鍵鎖"
+            },
+            "freeze_clean": {
+                "name": "凍結洗淨"
+            }
         }
     }
 }

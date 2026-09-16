@@ -1,4 +1,5 @@
 """JciHitachi integration."""
+import datetime
 import logging
 
 from homeassistant.components.switch import SwitchEntity
@@ -13,7 +14,10 @@ async def _async_setup(hass, async_add):
     coordinator = hass.data[DOMAIN][COORDINATOR]
 
     for thing in api.things.values():
-        if thing.type == "DH":
+        if thing.type == "AC":
+            async_add([JciHitachiFreezeCleanSwitchEntity(thing, coordinator)],
+                      update_before_add=True)
+        elif thing.type == "DH":
             async_add(
                 [JciHitachiAirCleaningFilterEntity(thing, coordinator),
                  JciHitachiCleanFilterNotifySwitchEntity(thing, coordinator),
@@ -231,4 +235,64 @@ class JciHitachiKeypadLockSwitchEntity(JciHitachiEntity, SwitchEntity):
         """Turn keypad lock off."""
         _LOGGER.debug(f"Turn {self.name} off")
         self.put_queue(status_name="KeypadLock", status_str_value="disabled")
+        self.update()
+
+
+class JciHitachiFreezeCleanSwitchEntity(JciHitachiEntity, SwitchEntity):
+    """Freeze clean (凍結洗淨) of an air conditioner: backend status `CleanSwitch` (legacy `freeze_clean`).
+
+    EXPERIMENTAL: the control has not been verified against a device yet. Every command keeps the
+    cloud's raw answer in the `last_control_response` attribute (recorded by the recorder) so the
+    behaviour can be checked afterwards. The support code of the tested RAD-series units reports
+    CleanSwitch mask 3 (on and off supported).
+    """
+
+    _attr_translation_key = "freeze_clean"
+    _attr_icon = "mdi:snowflake-melt"
+
+    def __init__(self, thing, coordinator):
+        super().__init__(thing, coordinator)
+
+    @property
+    def is_on(self):
+        """Current CleanSwitch from the latest status poll."""
+        status = self.hass.data[DOMAIN][UPDATED_DATA].get(self._thing.name, None)
+        if status:
+            if status.freeze_clean == "on":
+                return True
+            if status.freeze_clean == "off":
+                return False
+        return None
+
+    @property
+    def extra_state_attributes(self):
+        response = getattr(self._thing, "last_control_response", None)
+        if isinstance(response, (bytes, bytearray)):
+            response = f"not JSON, hex {bytes(response).hex()}"
+        sent_at = getattr(self._thing, "last_control_at", None)
+        return {
+            "experimental": True,
+            "last_control_request": getattr(self._thing, "last_control_request", None),
+            "last_control_response": response,
+            "last_control_at": (
+                datetime.datetime.fromtimestamp(sent_at).isoformat(timespec="seconds")
+                if sent_at
+                else None
+            ),
+        }
+
+    @property
+    def unique_id(self):
+        return f"{self._thing.gateway_mac_address}_freeze_clean_switch"
+
+    def turn_on(self, **kwargs):
+        """Start freeze clean."""
+        _LOGGER.debug(f"Turn {self.name} on")
+        self.put_queue(status_name="freeze_clean", status_str_value="on")
+        self.update()
+
+    def turn_off(self, **kwargs):
+        """Stop freeze clean."""
+        _LOGGER.debug(f"Turn {self.name} off")
+        self.put_queue(status_name="freeze_clean", status_str_value="off")
         self.update()

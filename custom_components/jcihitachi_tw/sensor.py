@@ -5,6 +5,7 @@ import logging
 from homeassistant.components.sensor import (SensorStateClass,
                                              SensorDeviceClass, SensorEntity)
 from homeassistant.const import (CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+                                 EntityCategory,
                                  PERCENTAGE, UnitOfEnergy, UnitOfTemperature)
 
 from . import API, COORDINATOR, DOMAIN, UPDATED_DATA, JciHitachiEntity
@@ -31,6 +32,7 @@ async def _async_setup(hass, async_add):
                 [JciHitachiPowerConsumptionSensorEntity(thing, coordinator),
                  JciHitachiMonthlyPowerConsumptionSensorEntity(thing, coordinator),
                  JciHitachiMonthIndicatorSensorEntity(thing, coordinator),
+                 JciHitachiFreezeCleanStatusSensorEntity(thing, coordinator),
                  ],
                 update_before_add=True)
         elif thing.type == "DH":
@@ -274,3 +276,29 @@ class JciHitachiIndoorTemperatureSensorEntity(JciHitachiEntity, SensorEntity):
     @property
     def unique_id(self):
         return f"{self._thing.gateway_mac_address}_indoor_temperature_sensor"
+
+
+class JciHitachiFreezeCleanStatusSensorEntity(JciHitachiEntity, SensorEntity):
+    """Raw `CleanStatus` of an air conditioner (integer, deliberately not interpreted).
+
+    EXPERIMENTAL: 0 was observed on idle units; the values during and after a freeze clean
+    have not been recorded yet.
+    """
+
+    _attr_translation_key = "freeze_clean_status"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:snowflake-melt"
+
+    def __init__(self, thing, coordinator):
+        super().__init__(thing, coordinator)
+
+    @property
+    def native_value(self):
+        status = self.hass.data[DOMAIN][UPDATED_DATA].get(self._thing.name, None)
+        if status is None or status.CleanStatus == "unsupported":
+            return None
+        return status.CleanStatus
+
+    @property
+    def unique_id(self):
+        return f"{self._thing.gateway_mac_address}_freeze_clean_status_sensor"
