@@ -60,7 +60,7 @@
         },
         "number": {
             "month_selector": {
-                "name": "用電統計月份"
+                "name": "選擇月份"
             }
         },
         "sensor": {

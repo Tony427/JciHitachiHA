@@ -60,7 +60,7 @@
         },
         "number": {
             "month_selector": {
-                "name": "Power Consumption Month"
+                "name": "Month Selector"
             }
         },
         "sensor": {
