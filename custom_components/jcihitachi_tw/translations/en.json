@@ -41,7 +41,11 @@
                 "name": "Attention Required"
             },
             "freeze_clean_notification": {
-                "name": "Freeze Clean Notification"
+                "name": "Freeze Clean Notification",
+                "state": {
+                    "on": "Clean needed",
+                    "off": "Not needed"
+                }
             }
         },
         "fan": {

@@ -241,10 +241,15 @@ class JciHitachiKeypadLockSwitchEntity(JciHitachiEntity, SwitchEntity):
 class JciHitachiFreezeCleanSwitchEntity(JciHitachiEntity, SwitchEntity):
     """Freeze clean (凍結洗淨) of an air conditioner: backend status `CleanSwitch` (legacy `freeze_clean`).
 
-    EXPERIMENTAL: the control has not been verified against a device yet. Every command keeps the
-    cloud's raw answer in the `last_control_response` attribute (recorded by the recorder) so the
-    behaviour can be checked afterwards. The support code of the tested RAD-series units reports
-    CleanSwitch mask 3 (on and off supported).
+    EXPERIMENTAL: verified on one device family only (LibJciHitachi contract profile
+    ac-rad-fw6.0.032, 2026-09-17). There, on and off both worked, but a unit may ignore a start
+    it cannot carry out, for example while another unit on the same outdoor unit is cleaning. The
+    cloud still echoes CleanSwitch 1 with Error 0 then. The library caches that echo, so the switch
+    shows on until the next poll reports the unit's own CleanSwitch (0); read from the code, not
+    observed in Home Assistant. Every command keeps the cloud's raw answer
+    in the `last_control_response` attribute (recorded by the recorder) so the behaviour can be
+    checked afterwards. The support code of the tested RAD-series units reports CleanSwitch mask 3
+    (on and off supported).
     """
 
     _attr_translation_key = "freeze_clean"

@@ -122,11 +122,14 @@ class JciHitachiFreezeCleanNotificationBinarySensorEntity(JciHitachiEntity, Bina
     Evidence (2026-09-16, three RAD-series ACs, LibJciHitachi fixtures/observed_2026_09_16):
     the official app showed the freeze-clean prompt for exactly the two units whose
     status/response carried `CleanNotification: 1`; the third unit had 0 and no prompt.
+    On 2026-09-17 the field went from 1 to 0 part-way through a freeze clean started from
+    this integration, on both units (LibJciHitachi contract profile ac-rad-fw6.0.032).
+
+    No device class: PROBLEM would render on/off as a fault, while the field only says
+    whether the unit asks for a freeze clean. The on/off text comes from the translations.
     """
 
     _attr_translation_key = "freeze_clean_notification"
-
-    _attr_device_class = BinarySensorDeviceClass.PROBLEM
 
     @property
     def is_on(self):

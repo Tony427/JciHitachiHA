@@ -281,8 +281,10 @@ class JciHitachiIndoorTemperatureSensorEntity(JciHitachiEntity, SensorEntity):
 class JciHitachiFreezeCleanStatusSensorEntity(JciHitachiEntity, SensorEntity):
     """Raw `CleanStatus` of an air conditioner (integer, deliberately not interpreted).
 
-    EXPERIMENTAL: 0 was observed on idle units; the values during and after a freeze clean
-    have not been recorded yet.
+    EXPERIMENTAL: recorded on one device family only (LibJciHitachi contract profile
+    ac-rad-fw6.0.032, 2026-09-17): 0 while idle, then 1 within about 1 s of an accepted start,
+    2 at most 28 s later, and 0 again when the clean ended or was interrupted. The cloud does not
+    say what 1 and 2 stand for, and other devices may differ, so the value stays a number.
     """
 
     _attr_translation_key = "freeze_clean_status"

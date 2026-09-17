@@ -50,9 +50,9 @@ A home assistant integration for controlling Jci Hitachi devices, using [LibJciH
   - Power consumption 用電統計 (supports HA core v2021.9.0+)
   - Monthly power consumption 月用電統計
   - ~~Sleep timer 睡眠計時器~~ (Only supported by LibJciHitachi)
-  - Freeze clean 凍結洗淨 (switch, **experimental**: not yet verified on a device; each command keeps the cloud's answer in the switch attributes)
-  - Freeze clean status code 凍結洗淨狀態碼 (diagnostic sensor, raw `CleanStatus` value, not interpreted yet)
-  - Freeze clean notification 凍結洗淨提醒 (binary sensor, from the status field `CleanNotification`)
+  - Freeze clean 凍結洗淨 (switch, **experimental**: verified on one RAD-series family only; a unit may ignore a start it cannot carry out even though the cloud acknowledges it, so check the status code after starting; each command keeps the cloud's answer in the switch attributes)
+  - Freeze clean status code 凍結洗淨狀態碼 (diagnostic sensor, raw `CleanStatus` value; 0 while idle and non-zero while cleaning on the tested units, deliberately not named)
+  - Freeze clean notification 凍結洗淨提醒 (binary sensor from the status field `CleanNotification`, shown as "Clean needed" / "Not needed")
 - All device types
   - Entity names follow your Home Assistant language (English, 繁體中文); `translations/zh-Hant.json` uses the Taiwan wording of this list
   - Attention required 需要處理 (binary sensor: on when the cloud did not answer for this device, or answered with a payload the backend cannot decode; the exact reason, including the raw bytes, is in the `reason` attribute)

@@ -41,7 +41,11 @@
                 "name": "需要處理"
             },
             "freeze_clean_notification": {
-                "name": "凍結洗淨提醒"
+                "name": "凍結洗淨提醒",
+                "state": {
+                    "on": "需要洗淨",
+                    "off": "不需要"
+                }
             }
         },
         "fan": {
