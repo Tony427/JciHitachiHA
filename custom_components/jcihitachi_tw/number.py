@@ -61,9 +61,12 @@ class JciHitachiMonthlyDataSelectorNumberEntity(JciHitachiEntity, NumberEntity):
     async def async_added_to_hass(self):
         await super().async_added_to_hass()
         self.hass.async_create_background_task(
-            self.hass.async_add_executor_job(self._fetch_month, self._value),
+            self._async_fetch_month(self._value),
             f"{DOMAIN} monthly data {self._thing.name}",
         )
+
+    async def _async_fetch_month(self, month):
+        await self.hass.async_add_executor_job(self._fetch_month, month)
 
     @property
     def native_value(self):
