@@ -35,77 +35,77 @@
                 "name": "Error"
             },
             "water_full": {
-                "name": "Water full warning"
+                "name": "Water Full Warning"
             },
             "attention_required": {
-                "name": "Attention required"
+                "name": "Attention Required"
             },
             "freeze_clean_notification": {
-                "name": "Freeze clean notification"
+                "name": "Freeze Clean Notification"
             }
         },
         "fan": {
             "air_speed": {
-                "name": "Air speed"
+                "name": "Air Speed"
             }
         },
         "light": {
             "panel_led": {
-                "name": "Panel LED"
+                "name": "panel LED"
             }
         },
         "number": {
             "month_selector": {
-                "name": "Month selector"
+                "name": "Month Selector"
             }
         },
         "sensor": {
             "indoor_humidity": {
-                "name": "Indoor humidity"
+                "name": "Indoor Humidity"
             },
             "pm25": {
                 "name": "PM2.5"
             },
             "odor_level": {
-                "name": "Odor level"
+                "name": "Odor Level"
             },
             "power_consumption": {
-                "name": "Power consumption"
+                "name": "Power Consumption"
             },
             "monthly_power_consumption": {
-                "name": "Monthly power consumption"
+                "name": "Monthly Power Consumption"
             },
             "month_indicator": {
-                "name": "Month indicator"
+                "name": "Month Indicator"
             },
             "indoor_temperature": {
-                "name": "Indoor temperature"
+                "name": "Indoor Temperature"
             },
             "freeze_clean_status": {
-                "name": "Freeze clean status code"
+                "name": "Freeze Clean Status Code"
             }
         },
         "switch": {
             "air_cleaning_filter": {
-                "name": "Air cleaning filter setting"
+                "name": "Air Cleaning Filter Setting"
             },
             "clean_filter_notify": {
-                "name": "Clean filter notification"
+                "name": "Clean Filter Notification"
             },
             "mold_prevention": {
-                "name": "Mold prevention"
+                "name": "Mold Prevention"
             },
             "wind_swingable": {
-                "name": "Wind swingable"
+                "name": "Wind Swingable"
             },
             "ion": {
                 "name": "Ion"
             },
             "keypad_lock": {
-                "name": "Keypad lock"
+                "name": "Keypad Lock"
             },
             "freeze_clean": {
-                "name": "Freeze clean"
+                "name": "Freeze Clean"
             }
         }
     }
