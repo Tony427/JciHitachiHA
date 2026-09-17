@@ -3,7 +3,10 @@ import logging
 
 from homeassistant.components.binary_sensor import (BinarySensorDeviceClass,
                                                     BinarySensorEntity)
+from homeassistant.components.logbook import async_log_entry
 from homeassistant.const import EntityCategory
+from homeassistant.core import callback
+from homeassistant.helpers.translation import async_get_translations
 
 from . import API, COORDINATOR, DOMAIN, UPDATED_DATA, JciHitachiEntity
 
@@ -99,6 +102,13 @@ class JciHitachiAttentionBinarySensorEntity(JciHitachiEntity, BinarySensorEntity
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
+    # sentinel: nothing written to the activity log yet for this entity instance
+    _NOT_LOGGED = object()
+
+    def __init__(self, thing, coordinator):
+        super().__init__(thing, coordinator)
+        self._logged_attention = self._NOT_LOGGED
+
     @property
     def available(self) -> bool:
         return True
@@ -109,7 +119,76 @@ class JciHitachiAttentionBinarySensorEntity(JciHitachiEntity, BinarySensorEntity
 
     @property
     def extra_state_attributes(self):
-        return {"reason": self._thing.attention_reason}
+        attention = getattr(self._thing, "attention", None) or {}
+        return {
+            "reason": self._thing.attention_reason,
+            "request": attention.get("request"),
+            "topic": attention.get("topic"),
+            "cause": attention.get("cause"),
+            "payload_length": attention.get("payload_length"),
+            "payload_hex": attention.get("payload_hex"),
+        }
+
+    async def async_added_to_hass(self):
+        await super().async_added_to_hass()
+        await self._async_log_attention()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        super()._handle_coordinator_update()
+        self.hass.async_create_task(self._async_log_attention())
+
+    async def _async_log_attention(self):
+        """Write one activity (logbook) entry each time the reason changes, recovery included.
+
+        The attribute `reason` is not shown in the activity log, which only lists on/off changes.
+        The text comes from the `exceptions` block of the translations in the server language
+        (`hass.config.language`), falling back to English.
+        """
+        attention = getattr(self._thing, "attention", None)
+        previous = self._logged_attention
+        if attention == previous:
+            return
+        self._logged_attention = attention
+        if attention is None and previous is self._NOT_LOGGED:
+            return  # nothing to report at start-up
+        message = await self._async_attention_message(attention)
+        async_log_entry(self.hass, self._thing.name, message, DOMAIN, self.entity_id)
+
+    async def _async_attention_message(self, attention):
+        language = self.hass.config.language
+        strings = await async_get_translations(self.hass, language, "exceptions", {DOMAIN})
+        fallback = None
+
+        async def text(key, **placeholders):
+            nonlocal fallback
+            full_key = f"component.{DOMAIN}.exceptions.{key}.message"
+            template = strings.get(full_key)
+            if template is None:
+                if fallback is None:
+                    fallback = await async_get_translations(
+                        self.hass, "en", "exceptions", {DOMAIN}
+                    )
+                template = fallback.get(full_key)
+            if template is None:
+                return None
+            return template.format(**placeholders)
+
+        if attention is None:
+            return await text("attention_cleared")
+        request_key = attention["request"].replace(" ", "_")
+        parts = [
+            await text(
+                f"attention_{attention['cause']}",
+                request=attention["request"],
+                topic=attention["topic"],
+                payload_length=attention.get("payload_length"),
+                payload_hex=attention.get("payload_hex"),
+            ),
+            await text(f"note_{request_key}"),
+            await text(f"observed_{request_key}_{attention['cause']}"),
+        ]
+        return " ".join(part for part in parts if part)
 
     @property
     def unique_id(self):

@@ -60,7 +60,7 @@
         },
         "number": {
             "month_selector": {
-                "name": "Month Selector"
+                "name": "Power Consumption Month"
             }
         },
         "sensor": {
@@ -86,7 +86,12 @@
                 "name": "Indoor Temperature"
             },
             "freeze_clean_status": {
-                "name": "Freeze Clean Status Code"
+                "name": "Freeze Clean Status",
+                "state": {
+                    "idle": "Idle",
+                    "starting": "Starting",
+                    "cleaning": "Cleaning"
+                }
             }
         },
         "switch": {
@@ -111,6 +116,35 @@
             "freeze_clean": {
                 "name": "Freeze Clean"
             }
+        }
+    },
+    "exceptions": {
+        "attention_undecodable": {
+            "message": "{request} request: the answer on {topic} is not JSON ({payload_length} bytes, hex {payload_hex}). Its meaning is unknown."
+        },
+        "attention_no_data": {
+            "message": "{request} request: no JSON answer arrived on {topic} in this poll."
+        },
+        "attention_timeout": {
+            "message": "{request} request: sending the request failed or did not complete."
+        },
+        "attention_cleared": {
+            "message": "All requests are answered normally again."
+        },
+        "note_support_code": {
+            "message": "Status is still read; entities that need the support code (climate, humidifier) are created once it answers JSON. It is asked again on every poll."
+        },
+        "note_status_code": {
+            "message": "The device is shown as unavailable until its status answers again. It is asked again on every poll."
+        },
+        "note_shadow": {
+            "message": "The shadow does not affect availability."
+        },
+        "observed_support_code_undecodable": {
+            "message": "Observed 2026-09-16/17: this lasted from about 20 minutes to more than an hour."
+        },
+        "observed_status_code_no_data": {
+            "message": "Observed 2026-09-17: it recovered within 3 minutes, twice."
         }
     }
 }

@@ -60,7 +60,7 @@
         },
         "number": {
             "month_selector": {
-                "name": "用電統計月份選擇"
+                "name": "用電統計月份"
             }
         },
         "sensor": {
@@ -86,7 +86,12 @@
                 "name": "室內溫度"
             },
             "freeze_clean_status": {
-                "name": "凍結洗淨狀態碼"
+                "name": "凍結洗淨狀態",
+                "state": {
+                    "idle": "待機",
+                    "starting": "啟動中",
+                    "cleaning": "洗淨中"
+                }
             }
         },
         "switch": {
@@ -111,6 +116,35 @@
             "freeze_clean": {
                 "name": "凍結洗淨"
             }
+        }
+    },
+    "exceptions": {
+        "attention_undecodable": {
+            "message": "{request} 請求：{topic} 的回應不是 JSON（{payload_length} bytes，hex {payload_hex}），含義未知。"
+        },
+        "attention_no_data": {
+            "message": "{request} 請求：這一輪在 {topic} 沒有收到 JSON 回應。"
+        },
+        "attention_timeout": {
+            "message": "{request} 請求：送出失敗或沒有完成。"
+        },
+        "attention_cleared": {
+            "message": "所有請求都已正常回應。"
+        },
+        "note_support_code": {
+            "message": "status 仍會讀取；需要 support code 的實體（climate、humidifier）會在它回 JSON 後建立。每次輪詢都會再問一次。"
+        },
+        "note_status_code": {
+            "message": "status 恢復回應前，這台顯示為不可用。每次輪詢都會再問一次。"
+        },
+        "note_shadow": {
+            "message": "shadow 不影響可用與否。"
+        },
+        "observed_support_code_undecodable": {
+            "message": "2026-09-16／17 觀察：持續時間從約 20 分鐘到一小時以上不等。"
+        },
+        "observed_status_code_no_data": {
+            "message": "2026-09-17 觀察：兩次都在 3 分鐘內恢復。"
         }
     }
 }
