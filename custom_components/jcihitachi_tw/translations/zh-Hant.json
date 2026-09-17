@@ -58,7 +58,7 @@
                 "name": "面板指示燈"
             }
         },
-        "number": {
+        "select": {
             "month_selector": {
                 "name": "選擇月份"
             }
