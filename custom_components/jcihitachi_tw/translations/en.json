@@ -145,6 +145,9 @@
         },
         "observed_status_code_no_data": {
             "message": "Observed 2026-09-17: it recovered within 3 minutes, twice."
+        },
+        "note_support_code_saved": {
+            "message": "Using the support code saved at {saved_at}: the controls stay available and commands still take effect (verified 2026-09-17 on a unit in this state: power, mode, fan speed, temperature). It is asked again on every poll and replaced once it answers JSON."
         }
     }
 }

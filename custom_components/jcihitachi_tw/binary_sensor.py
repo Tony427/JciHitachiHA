@@ -9,6 +9,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.translation import async_get_translations
 
 from . import API, COORDINATOR, DOMAIN, UPDATED_DATA, JciHitachiEntity
+from .const import SUPPORT_CACHE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -177,6 +178,8 @@ class JciHitachiAttentionBinarySensorEntity(JciHitachiEntity, BinarySensorEntity
         if attention is None:
             return await text("attention_cleared")
         request_key = attention["request"].replace(" ", "_")
+        cache = self.hass.data.get(DOMAIN, {}).get(SUPPORT_CACHE)
+        saved_at = cache.saved_at(self._thing.name, self._thing) if cache else None
         parts = [
             await text(
                 f"attention_{attention['cause']}",
@@ -185,7 +188,9 @@ class JciHitachiAttentionBinarySensorEntity(JciHitachiEntity, BinarySensorEntity
                 payload_length=attention.get("payload_length"),
                 payload_hex=attention.get("payload_hex"),
             ),
-            await text(f"note_{request_key}"),
+            await text("note_support_code_saved", saved_at=saved_at)
+            if request_key == "support_code" and saved_at
+            else await text(f"note_{request_key}"),
             await text(f"observed_{request_key}_{attention['cause']}"),
         ]
         return " ".join(part for part in parts if part)

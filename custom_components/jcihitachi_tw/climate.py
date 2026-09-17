@@ -15,6 +15,7 @@ from homeassistant.components.climate.const import (FAN_AUTO, FAN_DIFFUSE,
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 
 from . import API, COORDINATOR, DOMAIN, UPDATED_DATA, JciHitachiEntity
+from .const import SUPPORT_CACHE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -267,6 +268,14 @@ class JciHitachiClimateEntity(JciHitachiEntity, ClimateEntity):
     @property
     def swing_modes(self):
         return SUPPORT_SWING
+
+    @property
+    def extra_state_attributes(self):
+        """When the controls rely on a saved support code: when it was read (support_cache.py)."""
+        cache = self.hass.data.get(DOMAIN, {}).get(SUPPORT_CACHE)
+        return {
+            "capabilities_saved_at": cache.saved_at(self._thing.name, self._thing) if cache else None
+        }
 
     @property
     def unique_id(self):

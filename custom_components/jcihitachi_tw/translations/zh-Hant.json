@@ -145,6 +145,9 @@
         },
         "observed_status_code_no_data": {
             "message": "2026-09-17 觀察：兩次都在 3 分鐘內恢復。"
+        },
+        "note_support_code_saved": {
+            "message": "暫用 {saved_at} 記住的 support code：控制照常可用，指令仍會生效（2026-09-17 在同樣狀態的機器上驗證開關、模式、風速、溫度）。每次輪詢都會再問一次，回 JSON 後即更新。"
         }
     }
 }

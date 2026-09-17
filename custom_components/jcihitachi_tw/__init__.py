@@ -18,7 +18,8 @@ from JciHitachi import __version__
 from JciHitachi.api import (JciHitachiAuthError, JciHitachiAWSAPI,
                             JciHitachiDeviceError)
 
-from .const import (API, CONF_DEVICES, CONF_EMAIL, CONF_PASSWORD, CONF_RETRY,
+from .support_cache import SupportCodeCache
+from .const import (API, CONF_DEVICES, CONF_EMAIL, CONF_PASSWORD, CONF_RETRY, SUPPORT_CACHE,
                     CONFIG_SCHEMA, COORDINATOR, DOMAIN, UPDATE_DATA,
                     UPDATED_DATA)
 
@@ -28,13 +29,17 @@ DATA_UPDATE_INTERVAL = timedelta(seconds=30)
 BASE_TIMEOUT = 5
 
 
-def build_coordinator(hass, api, config_entry=None):
+def build_coordinator(hass, api, config_entry=None, support_cache=None):
 
     # Things whose support code was never read cannot get their control entities
     # (climate / humidifier need it). They are asked again, one at a time, after each normal
     # poll; once one answers, a config entry is reloaded so the missing entities get created.
+    # A device running on a saved support code (support_cache.py) is still asked every poll.
     pending_things = {
-        name for name, thing in api.things.items() if thing.support_code is None
+        name
+        for name, thing in api.things.items()
+        if thing.support_code is None
+        or (support_cache is not None and support_cache.uses_saved(name, thing))
     }
     # While a device is pending, every poll also requests the support codes (one extra MQTT
     # phase, up to 10 s). Asking only the pending device in a second refresh_status() call
@@ -76,18 +81,28 @@ def build_coordinator(hass, api, config_entry=None):
         # so nothing may touch hass.data[DOMAIN] after scheduling it. Observed 2026-09-17 01:13
         # as "Unexpected error fetching jcihitachi_tw data: KeyError" when this ran earlier.
         recovered = {
-            name for name in pending_things if api.things[name].support_code is not None
+            name
+            for name in pending_things
+            if api.things[name].support_code is not None
+            and not (support_cache is not None and support_cache.uses_saved(name, api.things[name]))
         }
         if recovered:
             pending_things.difference_update(recovered)
-            if config_entry is not None:
+            rebuild = {
+                name
+                for name in recovered
+                if support_cache is None or support_cache.release(name, api.things[name])
+            }
+            if support_cache is not None:
+                await support_cache.async_save_new(api)
+            if rebuild and config_entry is not None:
                 _LOGGER.info(
-                    f"{', '.join(sorted(recovered))} answered for the first time; reloading the entry to create the missing entities."
+                    f"{', '.join(sorted(rebuild))} answered its support code; reloading the entry to create or update its entities."
                 )
                 hass.config_entries.async_schedule_reload(config_entry.entry_id)
-            else:
+            elif rebuild:
                 _LOGGER.warning(
-                    f"{', '.join(sorted(recovered))} answered for the first time; restart Home Assistant to create its entities (YAML setup cannot reload)."
+                    f"{', '.join(sorted(rebuild))} answered its support code; restart Home Assistant to create or update its entities (YAML setup cannot reload)."
                 )
 
     coordinator = DataUpdateCoordinator(
@@ -145,8 +160,12 @@ async def async_setup(hass, config):
     hass.data[DOMAIN] = {}
     hass.data[DOMAIN][API] = api
     hass.data[DOMAIN][UPDATE_DATA] = Queue()
+    hass.data[DOMAIN][SUPPORT_CACHE] = SupportCodeCache(hass)
+    await hass.data[DOMAIN][SUPPORT_CACHE].async_load(api)
     hass.data[DOMAIN][UPDATED_DATA] = api.get_status(legacy=True)
-    hass.data[DOMAIN][COORDINATOR] = build_coordinator(hass, api)
+    hass.data[DOMAIN][COORDINATOR] = build_coordinator(
+        hass, api, support_cache=hass.data[DOMAIN][SUPPORT_CACHE]
+    )
     
     # Start jcihitachi components
     _LOGGER.debug("Starting JciHitachi components.")
@@ -207,8 +226,12 @@ async def async_setup_entry(hass, config_entry):
             )
 
     hass.data[DOMAIN][UPDATE_DATA] = Queue()
+    hass.data[DOMAIN][SUPPORT_CACHE] = SupportCodeCache(hass)
+    await hass.data[DOMAIN][SUPPORT_CACHE].async_load(hass.data[DOMAIN][API])
     hass.data[DOMAIN][UPDATED_DATA] = hass.data[DOMAIN][API].get_status(legacy=True)
-    hass.data[DOMAIN][COORDINATOR] = build_coordinator(hass, hass.data[DOMAIN][API], config_entry)
+    hass.data[DOMAIN][COORDINATOR] = build_coordinator(
+        hass, hass.data[DOMAIN][API], config_entry, hass.data[DOMAIN][SUPPORT_CACHE]
+    )
 
     # Start jcihitachi components
     _LOGGER.debug("Starting JciHitachi components.") 
