@@ -9,9 +9,11 @@ from typing import Optional
 
 import async_timeout
 import httpx
+from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import discovery
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import (CoordinatorEntity,
                                                       DataUpdateCoordinator,
                                                       UpdateFailed)
@@ -309,6 +311,21 @@ class JciHitachiEntity(CoordinatorEntity):
     def __init__(self, thing, coordinator):
         super().__init__(coordinator)
         self._thing = thing
+
+    @callback
+    def add_to_platform_start(self, hass, platform, parallel_updates):
+        super().add_to_platform_start(hass, platform, parallel_updates)
+        if platform.config_entry is None:
+            # Set up from configuration.yaml: HA registers no device for an entity without a
+            # config entry, so it would show the translated name alone ("Power Consumption"
+            # once per device, entity ids power_consumption, _2, _3). Put the device name in
+            # front here, before HA derives the entity id.
+            name = self.name
+            self._attr_name = (
+                self._thing.name
+                if name is None or name is UNDEFINED
+                else f"{self._thing.name} {name}"
+            )
 
     @property
     def available(self) -> bool:

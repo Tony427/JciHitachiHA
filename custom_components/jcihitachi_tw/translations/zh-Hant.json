@@ -120,7 +120,7 @@
     },
     "exceptions": {
         "attention_undecodable": {
-            "message": "{request} 請求：{topic} 的回應不是 JSON（{payload_length} bytes，hex {payload_hex}），含義未知。"
+            "message": "{request} 請求：{topic} 的回應不是 JSON（{payload_preview}），含義未知。"
         },
         "attention_no_data": {
             "message": "{request} 請求：這一輪在 {topic} 沒有收到 JSON 回應。"

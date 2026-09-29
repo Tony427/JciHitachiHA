@@ -120,7 +120,7 @@
     },
     "exceptions": {
         "attention_undecodable": {
-            "message": "{request} request: the answer on {topic} is not JSON ({payload_length} bytes, hex {payload_hex}). Its meaning is unknown."
+            "message": "{request} request: the answer on {topic} is not JSON ({payload_preview}). Its meaning is unknown."
         },
         "attention_no_data": {
             "message": "{request} request: no JSON answer arrived on {topic} in this poll."

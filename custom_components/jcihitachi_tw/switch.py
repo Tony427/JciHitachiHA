@@ -272,7 +272,14 @@ class JciHitachiFreezeCleanSwitchEntity(JciHitachiEntity, SwitchEntity):
     def extra_state_attributes(self):
         response = getattr(self._thing, "last_control_response", None)
         if isinstance(response, (bytes, bytearray)):
-            response = f"not JSON, hex {bytes(response).hex()}"
+            # in full only when short: a long answer can be a raw MQTT frame whose topic
+            # carries the account's identity id
+            response = bytes(response)
+            response = (
+                f"not JSON, hex {response.hex()}"
+                if len(response) <= 16
+                else f"not JSON, {len(response)} bytes, starts with 0x{response[0]:02x}"
+            )
         sent_at = getattr(self._thing, "last_control_at", None)
         return {
             "experimental": True,

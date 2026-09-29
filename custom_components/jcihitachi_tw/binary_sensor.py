@@ -128,6 +128,7 @@ class JciHitachiAttentionBinarySensorEntity(JciHitachiEntity, BinarySensorEntity
             "cause": attention.get("cause"),
             "payload_length": attention.get("payload_length"),
             "payload_hex": attention.get("payload_hex"),
+            "payload_preview": attention.get("payload_preview"),
         }
 
     async def async_added_to_hass(self):
@@ -185,8 +186,7 @@ class JciHitachiAttentionBinarySensorEntity(JciHitachiEntity, BinarySensorEntity
                 f"attention_{attention['cause']}",
                 request=attention["request"],
                 topic=attention["topic"],
-                payload_length=attention.get("payload_length"),
-                payload_hex=attention.get("payload_hex"),
+                payload_preview=attention.get("payload_preview"),
             ),
             await text("note_support_code_saved", saved_at=saved_at)
             if request_key == "support_code" and saved_at
