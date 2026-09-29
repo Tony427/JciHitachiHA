@@ -37,6 +37,9 @@
             "water_full": {
                 "name": "Water Full Warning"
             },
+            "attention_required": {
+                "name": "Attention Required"
+            },
             "freeze_clean_notification": {
                 "name": "Freeze Clean Notification",
                 "state": {
@@ -113,6 +116,29 @@
             "freeze_clean": {
                 "name": "Freeze Clean"
             }
+        }
+    },
+    "exceptions": {
+        "attention_undecodable": {
+            "message": "{request} request: the answer on {topic} is not JSON ({payload_preview}). Its meaning is unknown."
+        },
+        "attention_no_data": {
+            "message": "{request} request: no JSON answer arrived on {topic} in this poll."
+        },
+        "attention_timeout": {
+            "message": "{request} request: sending the request failed or did not complete."
+        },
+        "attention_cleared": {
+            "message": "All requests are answered normally again."
+        },
+        "note_support_code": {
+            "message": "Status is still read; entities that need the support code (climate, humidifier) are created once it answers JSON. It is asked again on every poll."
+        },
+        "note_status_code": {
+            "message": "The device is shown as unavailable until its status answers again. It is asked again on every poll."
+        },
+        "note_shadow": {
+            "message": "The shadow does not affect availability."
         }
     }
 }
