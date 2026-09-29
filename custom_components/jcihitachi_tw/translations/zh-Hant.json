@@ -21,6 +21,7 @@
         "error": {
             "assertion_check_error": "你指定的裝置在雲端帳號下找不到。",
             "login_error": "帳號或密碼錯誤。",
+            "connection_error": "無法連上日立雲端。請查看 Home Assistant 日誌後再試一次。",
             "unknown_error": "發生未知錯誤。"
         },
         "abort": {

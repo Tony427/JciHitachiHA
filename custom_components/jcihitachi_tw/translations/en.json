@@ -21,6 +21,7 @@
         "error": {
             "assertion_check_error": "The device(s) you specified is/are not available from the API.",
             "login_error": "Incorrect email or password.",
+            "connection_error": "Could not reach the Hitachi cloud. Check the Home Assistant log and try again.",
             "unknown_error": "Unknown error occurred."
         },
         "abort": {
