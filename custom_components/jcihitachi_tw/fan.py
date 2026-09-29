@@ -31,7 +31,7 @@ async def _async_setup(hass, async_add):
 
     for thing in api.things.values():
         if thing.type in ("DH", "HE") and thing.support_code is None:
-            # the fan speeds come from the support code (never read)
+            # the fan speeds come from the support code (never read, and nothing saved)
             _LOGGER.warning(f"Skipping fan entity for {thing.name}: {thing.attention_reason}")
             continue
         if thing.type == "DH":

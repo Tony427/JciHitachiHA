@@ -139,6 +139,9 @@
         },
         "note_shadow": {
             "message": "shadow 不影響可用與否。"
+        },
+        "note_support_code_saved": {
+            "message": "暫用 {saved_at} 記住的 support code：控制照常可用，指令仍會送出。每次輪詢都會再問一次，回 JSON 後即更新。"
         }
     }
 }
