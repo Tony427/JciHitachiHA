@@ -21,7 +21,7 @@
         "error": {
             "assertion_check_error": "你指定的裝置在雲端帳號下找不到。",
             "login_error": "帳號或密碼錯誤。",
-            "device_error": "已成功登入，但沒有任何裝置回應。請確認裝置在線上、關閉官方 app 後再試一次；每台裝置的原因記錄在 Home Assistant 的日誌裡。",
+            "device_error": "已成功登入，但沒有任何裝置回應。請確認裝置在線上後再試一次；每台裝置的原因記錄在 Home Assistant 的日誌裡。",
             "connection_error": "無法連上日立雲端。請查看 Home Assistant 日誌後再試一次。",
             "unknown_error": "發生未知錯誤。"
         },
@@ -74,10 +74,10 @@
                 "name": "異味等級"
             },
             "power_consumption": {
-                "name": "用電量"
+                "name": "用電統計"
             },
             "monthly_power_consumption": {
-                "name": "月用電量"
+                "name": "月用電統計"
             },
             "month_indicator": {
                 "name": "用電統計月份"
@@ -140,14 +140,8 @@
         "note_shadow": {
             "message": "shadow 不影響可用與否。"
         },
-        "observed_support_code_undecodable": {
-            "message": "2026-09-16／17 觀察：持續時間從約 20 分鐘到一小時以上不等。"
-        },
-        "observed_status_code_no_data": {
-            "message": "2026-09-17 觀察：兩次都在 3 分鐘內恢復。"
-        },
         "note_support_code_saved": {
-            "message": "暫用 {saved_at} 記住的 support code：控制照常可用，指令仍會生效（2026-09-17 在同樣狀態的機器上驗證開關、模式、風速、溫度）。每次輪詢都會再問一次，回 JSON 後即更新。"
+            "message": "暫用 {saved_at} 記住的 support code：控制照常可用，指令仍會生效。每次輪詢都會再問一次，回 JSON 後即更新。"
         }
     }
 }

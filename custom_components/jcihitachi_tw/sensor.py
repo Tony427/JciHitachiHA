@@ -286,8 +286,7 @@ class JciHitachiFreezeCleanStatusSensorEntity(JciHitachiEntity, SensorEntity):
     """Freeze clean status of an air conditioner, from the status field `CleanStatus`.
 
     EXPERIMENTAL. The cloud does not say what the values mean. The names below come from what was
-    observed on one device family (LibJciHitachi contract profile ac-rad-fw6.0.032, 2026-09-17,
-    7 starts on two units):
+    observed on one device family (2026-09-17, 7 starts on two units):
 
     - 0 idle: while idle, after a start the unit did not carry out, after a clean ended or was
       interrupted.
@@ -298,16 +297,6 @@ class JciHitachiFreezeCleanStatusSensorEntity(JciHitachiEntity, SensorEntity):
 
     Any other value is shown as unknown, with the integer kept in `raw_value`, so a device that
     reports something else does not break the entity.
-
-    實驗性。雲端沒有說明數值的意思，以下名稱來自單一機體家族的觀察（LibJciHitachi contract
-    profile ac-rad-fw6.0.032，2026-09-17，兩台共 7 次啟動）：
-
-    - 0 待機：閒置、機體沒有執行的啟動之後、洗完或中斷之後。
-    - 1 啟動中：接受啟動後約 1 秒內出現，最多維持 28 秒。這是我們替這一段取的名字；長度接近
-      說明書的 30 秒環境偵測，但沒有證據兩者是同一件事。
-    - 2 洗淨中：其餘的洗淨期間。
-
-    其他數值顯示為未知，原始整數保留在 `raw_value`，其他機型回報別的值時實體不會出錯。
     """
 
     _attr_translation_key = "freeze_clean_status"

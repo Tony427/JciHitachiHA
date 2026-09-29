@@ -4,8 +4,7 @@ Why: after a restart the support-code request (registration/response) of a unit 
 non-JSON payload on every poll for tens of minutes to hours, while its status answers normally.
 The climate / humidifier entity needs the support code (modes, fan speeds, temperature range), so
 without it the controls did not exist all that time. On 2026-09-17 a unit in that state still
-carried out power, mode, fan speed and temperature commands within 9 s (LibJciHitachi contract
-profile ac-rad-fw6.0.032). The support code describes the model: one unit's answers on
+carried out power, mode, fan speed and temperature commands within 9 s. The support code describes the model: one unit's answers on
 2026-09-16 and 2026-09-17 differed only in their timestamps.
 
 So the raw support-code JSON of each device is kept in `.storage/jcihitachi_tw.support_codes`

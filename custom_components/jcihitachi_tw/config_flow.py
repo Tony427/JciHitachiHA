@@ -79,7 +79,7 @@ class JciHitachiConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # the backend cannot decode); details are logged per device by the backend
                 _LOGGER.error(f"Logged in, but no device answered: {err}")
                 errors['base'] = 'device_error'
-            except (RuntimeError, httpx.HTTPError, ValueError) as err:
+            except (RuntimeError, httpx.HTTPError, TimeoutError, ValueError) as err:
                 _LOGGER.error(f"Failed to reach the Hitachi cloud: {err}")
                 errors['base'] = 'connection_error'
             except Exception as err:

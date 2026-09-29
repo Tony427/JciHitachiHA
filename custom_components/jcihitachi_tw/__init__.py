@@ -35,8 +35,8 @@ POLL_MARGIN = 2
 def build_coordinator(hass, api, config_entry=None, support_cache=None):
 
     # Things whose support code was never read cannot get their control entities
-    # (climate / humidifier need it). They are asked again, one at a time, after each normal
-    # poll; once one answers, a config entry is reloaded so the missing entities get created.
+    # (climate / humidifier need it). They are asked again on every
+    # poll; once one answers, the config entry is reloaded so the missing entities get created.
     def support_missing(name, thing):
         # no support code, or only a saved one (support_cache.py): keep asking for it
         return thing.support_code is None or (
@@ -167,7 +167,7 @@ async def async_setup(hass, config):
     except AssertionError as err:
         _LOGGER.error(f"Assertion check error: {err}")
         return False
-    except (RuntimeError, httpx.HTTPError, ValueError) as err:
+    except (RuntimeError, httpx.HTTPError, TimeoutError, ValueError) as err:
         _LOGGER.error(f"Failed to login API: {err}")
         return False
 
@@ -225,7 +225,7 @@ async def async_setup_entry(hass, config_entry):
         except JciHitachiAuthError as err:
             _LOGGER.error(f"Failed to login API: {err}")
             return False
-        except (RuntimeError, httpx.HTTPError, ValueError) as err:
+        except (RuntimeError, httpx.HTTPError, TimeoutError, ValueError) as err:
             # Cloud or network not reachable: let Home Assistant retry instead of staying dead
             # until a reboot. RuntimeError covers the MQTT connection (the library converts
             # its failure), httpx.HTTPError the HTTP calls (connection errors, timeouts),
