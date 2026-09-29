@@ -55,7 +55,7 @@
         },
         "light": {
             "panel_led": {
-                "name": "面板指示燈"
+                "name": "顯示器亮度"
             }
         },
         "select": {
@@ -65,7 +65,7 @@
         },
         "sensor": {
             "indoor_humidity": {
-                "name": "室內濕度"
+                "name": "室內溼度"
             },
             "pm25": {
                 "name": "PM2.5"
@@ -141,7 +141,7 @@
             "message": "shadow 不影響可用與否。"
         },
         "note_support_code_saved": {
-            "message": "暫用 {saved_at} 記住的 support code：控制照常可用，指令仍會生效。每次輪詢都會再問一次，回 JSON 後即更新。"
+            "message": "暫用 {saved_at} 記住的 support code：控制照常可用，指令仍會送出。每次輪詢都會再問一次，回 JSON 後即更新。"
         }
     }
 }
