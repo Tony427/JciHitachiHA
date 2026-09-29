@@ -9,6 +9,7 @@ from typing import Optional
 import async_timeout
 from homeassistant.core import callback
 from homeassistant.helpers import discovery
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import (CoordinatorEntity,
                                                       DataUpdateCoordinator,
@@ -21,7 +22,7 @@ from .const import (API, CONF_DEVICES, CONF_EMAIL, CONF_PASSWORD, CONF_RETRY,
                     UPDATED_DATA)
 
 _LOGGER = logging.getLogger(__name__)
-PLATFORMS = ["binary_sensor", "climate", "fan", "humidifier", "number", "sensor", "switch", "light"]
+PLATFORMS = ["binary_sensor", "climate", "fan", "humidifier", "select", "sensor", "switch", "light"]
 DATA_UPDATE_INTERVAL = timedelta(seconds=30)
 BASE_TIMEOUT = 5
 
@@ -112,6 +113,7 @@ async def async_setup(hass, config):
     
     # Start jcihitachi components
     _LOGGER.debug("Starting JciHitachi components.")
+    _remove_replaced_month_selectors(hass, api)
     for platform in PLATFORMS:
         discovery.load_platform(hass, platform, DOMAIN, {}, config)
 
@@ -166,11 +168,31 @@ async def async_setup_entry(hass, config_entry):
 
     # Start jcihitachi components
     _LOGGER.debug("Starting JciHitachi components.") 
+    _remove_replaced_month_selectors(hass, hass.data[DOMAIN][API])
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
         
     
     # Return boolean to indicate that initialization was successful.
     return True
+
+
+def _remove_replaced_month_selectors(hass, api):
+    """Remove the 0-12 month selector numbers that the Month Selector drop-down replaced.
+
+    Home Assistant keeps registry entries of entities an integration no longer provides, so every
+    device page would show an empty "Month Selector" next to the new drop-down of the same name
+    (seen on 2026-09-17). Only this integration's `number` entries with the old unique_id are
+    removed; nothing else is touched. Automations using the old entity stop working either way.
+    """
+    registry = er.async_get(hass)
+    for thing in api.things.values():
+        unique_id = f"{thing.gateway_mac_address}_monthly_data_selector_number"
+        entity_id = registry.async_get_entity_id("number", DOMAIN, unique_id)
+        if entity_id is not None:
+            registry.async_remove(entity_id)
+            _LOGGER.info(
+                f"Removed {entity_id}: the month selector is now a drop-down (select entity)."
+            )
 
 
 @dataclass

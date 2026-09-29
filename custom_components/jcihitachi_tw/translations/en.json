@@ -53,7 +53,7 @@
                 "name": "panel LED"
             }
         },
-        "number": {
+        "select": {
             "month_selector": {
                 "name": "Month Selector"
             }

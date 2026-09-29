@@ -53,7 +53,7 @@
                 "name": "顯示器亮度"
             }
         },
-        "number": {
+        "select": {
             "month_selector": {
                 "name": "選擇月份"
             }
