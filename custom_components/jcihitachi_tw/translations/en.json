@@ -34,6 +34,13 @@
             },
             "water_full": {
                 "name": "Water Full Warning"
+            },
+            "freeze_clean_notification": {
+                "name": "Freeze Clean Notification",
+                "state": {
+                    "on": "Clean needed",
+                    "off": "Not needed"
+                }
             }
         },
         "fan": {
@@ -72,6 +79,14 @@
             },
             "indoor_temperature": {
                 "name": "Indoor Temperature"
+            },
+            "freeze_clean_status": {
+                "name": "Freeze Clean Status",
+                "state": {
+                    "idle": "Idle",
+                    "starting": "Starting",
+                    "cleaning": "Cleaning"
+                }
             }
         },
         "switch": {
@@ -92,6 +107,9 @@
             },
             "keypad_lock": {
                 "name": "Keypad Lock"
+            },
+            "freeze_clean": {
+                "name": "Freeze Clean"
             }
         }
     }

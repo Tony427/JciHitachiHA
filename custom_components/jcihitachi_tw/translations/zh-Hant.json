@@ -34,6 +34,13 @@
             },
             "water_full": {
                 "name": "滿水警示"
+            },
+            "freeze_clean_notification": {
+                "name": "凍結洗淨提醒",
+                "state": {
+                    "on": "需要洗淨",
+                    "off": "不需要"
+                }
             }
         },
         "fan": {
@@ -72,6 +79,14 @@
             },
             "indoor_temperature": {
                 "name": "室內溫度"
+            },
+            "freeze_clean_status": {
+                "name": "凍結洗淨狀態",
+                "state": {
+                    "idle": "待機",
+                    "starting": "啟動中",
+                    "cleaning": "洗淨中"
+                }
             }
         },
         "switch": {
@@ -92,6 +107,9 @@
             },
             "keypad_lock": {
                 "name": "按鍵鎖"
+            },
+            "freeze_clean": {
+                "name": "凍結洗淨"
             }
         }
     }
