@@ -1,5 +1,6 @@
 """JciHitachi integration."""
 import asyncio
+import functools
 import logging
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -7,7 +8,9 @@ from queue import Queue
 from typing import Optional
 
 import async_timeout
+import httpx
 from homeassistant.core import callback
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import discovery
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.typing import UNDEFINED
@@ -15,7 +18,8 @@ from homeassistant.helpers.update_coordinator import (CoordinatorEntity,
                                                       DataUpdateCoordinator,
                                                       UpdateFailed)
 from JciHitachi import __version__
-from JciHitachi.api import JciHitachiAWSAPI
+from JciHitachi.api import (JciHitachiAuthError, JciHitachiAWSAPI,
+                            JciHitachiDeviceError)
 
 from .const import (API, CONF_DEVICES, CONF_EMAIL, CONF_PASSWORD, CONF_RETRY,
                     CONFIG_SCHEMA, COORDINATOR, DOMAIN, UPDATE_DATA,
@@ -24,12 +28,34 @@ from .const import (API, CONF_DEVICES, CONF_EMAIL, CONF_PASSWORD, CONF_RETRY,
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ["binary_sensor", "climate", "fan", "humidifier", "select", "sensor", "switch", "light"]
 DATA_UPDATE_INTERVAL = timedelta(seconds=30)
-BASE_TIMEOUT = 5
+# Margin per MQTT phase and for the whole poll, on top of the library's MQTT timeout.
+PHASE_MARGIN = 2
+POLL_MARGIN = 2
 
 
-def build_coordinator(hass, api):
+def build_coordinator(hass, api, config_entry=None):
 
-    timeout = BASE_TIMEOUT + len(api.things) * 2
+    # Things whose support code was never read cannot get their control entities
+    # (climate / humidifier need it). They are asked again on every
+    # poll; once one answers, the config entry is reloaded so the missing entities get created.
+    def support_missing(name, thing):
+        return thing.support_code is None
+
+    def entities_missing(name, thing):
+        # an entity of this device could not be created at setup: climate / humidifier need
+        # the support code, and the humidifier also needs a status (humidifier.py)
+        return support_missing(name, thing) or (
+            thing.type == "DH" and thing.status_code is None
+        )
+
+    pending_things = {
+        name for name, thing in api.things.items() if entities_missing(name, thing)
+    }
+    # While a device lacks its support code, every poll also requests the support codes (one
+    # extra MQTT phase). Asking only the pending device in a second refresh_status() call was
+    # tried and rejected: the first call marked it available (its status answers), the second
+    # marked it unavailable again, so the state and the log flapped every poll.
+    mqtt_timeout = getattr(api, "_mqtt_timeout", 10.0)
 
     async def async_update_data():
         """Fetch data from API endpoint.
@@ -37,21 +63,55 @@ def build_coordinator(hass, api):
         This is the place to pre-process the data to lookup tables
         so entities can quickly look up their data.
         """
+        ask_support = any(
+            support_missing(name, api.things[name]) for name in pending_things
+        )
+        # The library runs its MQTT phases one after another (support code, then status), and
+        # each phase waits up to its MQTT timeout for the slowest device, so one silent device
+        # costs about that long per phase whatever the number of devices. With the default
+        # 10 s: status only 14 s, with support codes 26 s, both below the 30 s poll interval.
+        timeout = (2 if ask_support else 1) * (mqtt_timeout + PHASE_MARGIN) + POLL_MARGIN
         try:
             # Note: asyncio.TimeoutError and aiohttp.ClientError are already
             # handled by the data update coordinator.
             async with async_timeout.timeout(timeout):
-                await hass.async_add_executor_job(api.refresh_status)
+                await hass.async_add_executor_job(
+                    functools.partial(
+                        api.refresh_status, refresh_support_code=ask_support
+                    )
+                )
                 hass.data[DOMAIN][UPDATED_DATA] = api.get_status(legacy=True)
 
         except asyncio.TimeoutError as err:
             raise UpdateFailed(f"Command executed timed out when regularly fetching data.")
 
+        except JciHitachiDeviceError as err:
+            # every device failed this round; each thing carries its own attention_reason
+            raise UpdateFailed(f"No device answered: {err}")
+
         except Exception as err:
             raise UpdateFailed(f"Error communicating with API: {err}")
-        
+
         _LOGGER.debug(
             f"Latest data: {[(name, value.status) for name, value in hass.data[DOMAIN][UPDATED_DATA].items()]}")
+
+        # Must stay last: the reload unloads the entry (and pops hass.data[DOMAIN]) right away,
+        # so nothing may touch hass.data[DOMAIN] after scheduling it (doing so raises KeyError
+        # in the update).
+        recovered = {
+            name for name in pending_things if not entities_missing(name, api.things[name])
+        }
+        if recovered:
+            pending_things.difference_update(recovered)
+            if config_entry is not None:
+                _LOGGER.info(
+                    f"{', '.join(sorted(recovered))} answered its support code; reloading the entry to create or update its entities."
+                )
+                hass.config_entries.async_schedule_reload(config_entry.entry_id)
+            else:
+                _LOGGER.warning(
+                    f"{', '.join(sorted(recovered))} answered its support code; restart Home Assistant to create or update its entities (YAML setup cannot reload)."
+                )
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -98,7 +158,7 @@ async def async_setup(hass, config):
     except AssertionError as err:
         _LOGGER.error(f"Assertion check error: {err}")
         return False
-    except RuntimeError as err:
+    except (RuntimeError, httpx.HTTPError, TimeoutError, ValueError) as err:
         _LOGGER.error(f"Failed to login API: {err}")
         return False
 
@@ -149,10 +209,17 @@ async def async_setup_entry(hass, config_entry):
         except AssertionError as err:
             _LOGGER.error(f"Assertion check error: {err}")
             return False
-        except RuntimeError as err:
+        except JciHitachiAuthError as err:
             _LOGGER.error(f"Failed to login API: {err}")
             return False
-        
+        except (RuntimeError, httpx.HTTPError, TimeoutError, ValueError) as err:
+            # Cloud or network not reachable: let Home Assistant retry instead of staying dead
+            # until a reboot. RuntimeError covers the MQTT connection (the library converts
+            # its failure), httpx.HTTPError the HTTP calls (connection errors, timeouts),
+            # ValueError a non-JSON HTTP answer such as a 5xx page. Programming errors are
+            # not caught here, so they are not retried forever.
+            raise ConfigEntryNotReady(f"Failed to reach the Hitachi cloud: {err}") from err
+
         hass.data[DOMAIN] = {}
         hass.data[DOMAIN][API] = api
     else:
@@ -161,10 +228,15 @@ async def async_setup_entry(hass, config_entry):
 
     _LOGGER.debug(f"Backend version: {__version__}")
     _LOGGER.debug(f"Thing info: {[thing for thing in hass.data[DOMAIN][API].things.values()]}")
+    for thing in hass.data[DOMAIN][API].things.values():
+        if not thing.available:
+            _LOGGER.warning(
+                f"{thing.name} is loaded as unavailable: {thing.attention_reason}"
+            )
 
     hass.data[DOMAIN][UPDATE_DATA] = Queue()
     hass.data[DOMAIN][UPDATED_DATA] = hass.data[DOMAIN][API].get_status(legacy=True)
-    hass.data[DOMAIN][COORDINATOR] = build_coordinator(hass, hass.data[DOMAIN][API])
+    hass.data[DOMAIN][COORDINATOR] = build_coordinator(hass, hass.data[DOMAIN][API], config_entry)
 
     # Start jcihitachi components
     _LOGGER.debug("Starting JciHitachi components.") 
@@ -193,6 +265,16 @@ def _remove_replaced_month_selectors(hass, api):
             _LOGGER.info(
                 f"Removed {entity_id}: the month selector is now a drop-down (select entity)."
             )
+
+
+async def async_unload_entry(hass, config_entry):
+    """Unload a config entry (needed for reload after a device recovers)."""
+    unload_ok = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
+    if unload_ok:
+        data = hass.data.pop(DOMAIN, None)
+        if data and API in data:
+            await hass.async_add_executor_job(data[API].logout)
+    return unload_ok
 
 
 @dataclass
