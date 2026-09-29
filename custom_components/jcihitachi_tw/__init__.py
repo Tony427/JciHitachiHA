@@ -98,8 +98,8 @@ def build_coordinator(hass, api, config_entry=None, support_cache=None):
             f"Latest data: {[(name, value.status) for name, value in hass.data[DOMAIN][UPDATED_DATA].items()]}")
 
         # Must stay last: the reload unloads the entry (and pops hass.data[DOMAIN]) right away,
-        # so nothing may touch hass.data[DOMAIN] after scheduling it. Observed 2026-09-17 01:13
-        # as "Unexpected error fetching jcihitachi_tw data: KeyError" when this ran earlier.
+        # so nothing may touch hass.data[DOMAIN] after scheduling it (doing so raises KeyError
+        # in the update).
         recovered = {
             name for name in pending_things if not entities_missing(name, api.things[name])
         }
